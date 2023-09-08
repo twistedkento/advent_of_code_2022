@@ -3,43 +3,45 @@
 #include <iostream>
 #include <numeric>
 #include <algorithm>
+#include <string>
+
+using Elf = std::vector<int>;
+using ElfCrew = std::vector<Elf>;
+
+std::istream& operator>>(std::istream& is, Elf& elf) {
+  std::string number;
+  while ( std::getline(is, number, '\n') ) {
+    elf.emplace_back(std::stoi(number));
+    if (is.peek() == '\n') {
+      is.get();
+      return is;
+    }
+  }
+  return is;
+}
 
 int main(int argc, char* argv[])
 {
-  std::string filename{"elves.dat"};
-  std::ifstream fs(filename, fs.in);
-  std::string thing;
+  std::ifstream fs("elves.dat", fs.in);
 
-  std::vector<std::vector<int>> elves;
-  std::vector<int> temp_vector;
-  while (fs >> thing)
-  {
-    temp_vector.emplace_back(std::stoi(thing));
-    if  (fs.peek() == '\n')
-    {
-      fs.get();
-      if  (fs.peek() == '\n' || fs.eof())
-      {
-        elves.push_back(temp_vector);
-        temp_vector.clear();
-      }
-    }
+  ElfCrew elves;
+  Elf temp_elf;
+
+  while (fs >> temp_elf) {
+      elves.push_back(temp_elf);
+      temp_elf.clear();
   }
 
+  std::sort(elves.begin(), elves.end(), [](auto& elf1, auto& elf2) {
+    return std::accumulate(elf1.begin(), elf1.end(), 0) > std::accumulate(elf2.begin(), elf2.end(), 0);
+  });
 
-  std::sort(elves.begin(), elves.end(), [](auto& e1, auto& e2) {
-      int e1total = std::accumulate(e1.begin(), e1.end(), 0);
-      int e2total = std::accumulate(e2.begin(), e2.end(), 0);
-      return e1total > e2total;
-      });
-
-  int top_alfa_elf = std::accumulate(std::begin(elves.at(0)), std::end(elves.at(0)), 0);
+  int top_alfa_elf = std::accumulate(std::begin(*elves.begin()), std::end(*elves.begin()), 0);
   std::cout << "Alfa elf numero uno: " << top_alfa_elf << "\n";
 
   int total = 0;
-  for (int idx: {0,1,2}) {
-    auto& target_elf = elves.at(idx);
-    total = std::accumulate(std::begin(target_elf), std::end(target_elf), total);
+  for (auto elf_it = elves.begin(); elf_it != std::next(elves.begin(), 3); elf_it++) {
+    total = std::accumulate(elf_it->begin(), elf_it->end(), total);
   }
 
   std::cout << "Top 3: " << total << "\n";
